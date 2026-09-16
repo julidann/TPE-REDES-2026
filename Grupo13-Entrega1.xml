@@ -1,7 +1,164 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <scenario>
-  <networks/>
-  <devices/>
+  <networks>
+    <network id="3" name="Sw-Adm" icon="" canvas="1" type="SWITCH">
+      <position x="51.0" y="187.0" lat="47.57746661840622" lon="-122.13163700755763" alt="2.0"/>
+    </network>
+    <network id="6" name="SW-DC" icon="" canvas="1" type="SWITCH">
+      <position x="130.0" y="189.0" lat="47.57744843849355" lon="-122.13057250394594" alt="2.0"/>
+    </network>
+    <network id="9" name="Sw-Troncal" icon="" canvas="1" type="SWITCH">
+      <position x="227.0" y="188.0" lat="47.57745752845067" lon="-122.12926545520756" alt="2.0"/>
+    </network>
+    <network id="10" name="SW-Comp" icon="" canvas="1" type="SWITCH">
+      <position x="336.0" y="191.0" lat="47.57743025857457" lon="-122.12779670971803" alt="2.0"/>
+    </network>
+    <network id="11" name="SW-Esc" icon="" canvas="1" type="SWITCH">
+      <position x="417.0" y="194.0" lat="47.57740298868426" lon="-122.12670525664782" alt="2.0"/>
+    </network>
+    <network id="12" name="n12" icon="" canvas="1" type="SWITCH">
+      <position x="500.0" y="196.0" lat="47.57738480874951" lon="-122.12558685411909" alt="2.0"/>
+    </network>
+    <network id="22" name="wlan-Casa" icon="" canvas="1" type="WIRELESS_LAN">
+      <position x="89.78502655029297" y="578.888427734375" lat="47.57390424915128" lon="-122.13111438982546" alt="2.0"/>
+    </network>
+    <network id="23" name="wlan-Inv" icon="" canvas="1" type="WIRELESS_LAN">
+      <position x="247.2985076904297" y="595.6112670898438" lat="47.57375222873558" lon="-122.12899193831201" alt="2.0"/>
+    </network>
+    <network id="24" name="wlan-Reu" icon="" canvas="1" type="WIRELESS_LAN">
+      <position x="371.4861755371094" y="601.343017578125" lat="47.573700123661084" lon="-122.1273185431101" alt="2.0"/>
+    </network>
+  </networks>
+  <devices>
+    <device id="1" name="R1" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
+      <position x="137.0" y="56.0" lat="47.5786573889384" lon="-122.13047818084111" alt="2.0"/>
+      <services>
+        <service name="OSPFv2"/>
+        <service name="OSPFv3"/>
+        <service name="zebra"/>
+        <service name="IPForward"/>
+      </services>
+    </device>
+    <device id="2" name="R4" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
+      <position x="389.0" y="52.0" lat="47.57869374791789" lon="-122.12708254906714" alt="2.0"/>
+      <services>
+        <service name="OSPFv2"/>
+        <service name="OSPFv3"/>
+        <service name="zebra"/>
+        <service name="IPForward"/>
+      </services>
+    </device>
+    <device id="4" name="R0" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
+      <position x="735.3451538085938" y="57.0" lat="47.57864829918958" lon="-122.12241564188845" alt="2.0"/>
+      <services>
+        <service name="OSPFv2"/>
+        <service name="OSPFv3"/>
+        <service name="zebra"/>
+        <service name="IPForward"/>
+      </services>
+    </device>
+    <device id="5" name="R5" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
+      <position x="466.0" y="51.0" lat="47.57870283765881" lon="-122.12604499491398" alt="2.0"/>
+      <services>
+        <service name="OSPFv2"/>
+        <service name="OSPFv3"/>
+        <service name="zebra"/>
+        <service name="IPForward"/>
+      </services>
+    </device>
+    <device id="7" name="R3" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
+      <position x="309.0" y="48.0" lat="47.57873010687212" lon="-122.12816052740808" alt="2.0"/>
+      <services>
+        <service name="OSPFv2"/>
+        <service name="OSPFv3"/>
+        <service name="zebra"/>
+        <service name="IPForward"/>
+      </services>
+    </device>
+    <device id="8" name="R2" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
+      <position x="224.0" y="41.0" lat="47.578793734981275" lon="-122.12930587939535" alt="2.0"/>
+      <services>
+        <service name="OSPFv2"/>
+        <service name="OSPFv3"/>
+        <service name="zebra"/>
+        <service name="IPForward"/>
+      </services>
+    </device>
+    <device id="13" name="R6" icon="" canvas="1" type="router" class="" image="" compose="" compose_name="">
+      <position x="847.3186645507812" y="62.64231872558594" lat="47.57859701190006" lon="-122.12090682914669" alt="2.0"/>
+      <services>
+        <service name="OSPFv2"/>
+        <service name="OSPFv3"/>
+        <service name="zebra"/>
+        <service name="IPForward"/>
+      </services>
+    </device>
+    <device id="14" name="PC-Casa" icon="" canvas="1" type="PC" class="" image="" compose="" compose_name="">
+      <position x="41.0" y="295.0" lat="47.57648489408939" lon="-122.13177175485025" alt="2.0"/>
+      <services>
+        <service name="DefaultRoute"/>
+      </services>
+    </device>
+    <device id="15" name="PC1" icon="" canvas="1" type="PC" class="" image="" compose="" compose_name="">
+      <position x="116.0" y="297.0" lat="47.57646671383586" lon="-122.1307611501556" alt="2.0"/>
+      <services>
+        <service name="DefaultRoute"/>
+      </services>
+    </device>
+    <device id="16" name="PC2" icon="" canvas="1" type="PC" class="" image="" compose="" compose_name="">
+      <position x="195.0" y="297.0" lat="47.57646671383586" lon="-122.12969664654392" alt="2.0"/>
+      <services>
+        <service name="DefaultRoute"/>
+      </services>
+    </device>
+    <device id="17" name="PC3" icon="" canvas="1" type="PC" class="" image="" compose="" compose_name="">
+      <position x="39.0" y="374.0" lat="47.57576676927524" lon="-122.13179870430876" alt="2.0"/>
+      <services>
+        <service name="DefaultRoute"/>
+      </services>
+    </device>
+    <device id="18" name="PC4" icon="" canvas="1" type="PC" class="" image="" compose="" compose_name="">
+      <position x="110.0" y="374.0" lat="47.57576676927524" lon="-122.13084199853118" alt="2.0"/>
+      <services>
+        <service name="DefaultRoute"/>
+      </services>
+    </device>
+    <device id="19" name="Server-Docker" icon="/home/core/.coregui/icons/host.png" canvas="1" type="" class="docker" image="ubuntu:latest" compose="" compose_name="">
+      <position x="50.0" y="482.0" lat="47.57478501308751" lon="-122.13165048228689" alt="2.0"/>
+    </device>
+    <device id="20" name="Server-2" icon="/home/core/.coregui/icons/host.png" canvas="1" type="" class="docker" image="ubuntu:latest" compose="" compose_name="">
+      <position x="153.0" y="480.0" lat="47.574803193924936" lon="-122.13026258517293" alt="2.0"/>
+    </device>
+    <device id="21" name="Server-A" icon="/home/core/.coregui/icons/host.png" canvas="1" type="" class="docker" image="ubuntu:latest" compose="" compose_name="">
+      <position x="248.0" y="489.0" lat="47.57472138010682" lon="-122.12898248589306" alt="2.0"/>
+    </device>
+  </devices>
+  <mobility_configurations>
+    <mobility_configuration node="22" model="basic_range">
+      <configuration name="range" value="275"/>
+      <configuration name="bandwidth" value="54000000"/>
+      <configuration name="jitter" value="0"/>
+      <configuration name="delay" value="5000"/>
+      <configuration name="error" value="0.0"/>
+      <configuration name="promiscuous" value="0"/>
+    </mobility_configuration>
+    <mobility_configuration node="23" model="basic_range">
+      <configuration name="range" value="275"/>
+      <configuration name="bandwidth" value="54000000"/>
+      <configuration name="jitter" value="0"/>
+      <configuration name="delay" value="5000"/>
+      <configuration name="error" value="0.0"/>
+      <configuration name="promiscuous" value="0"/>
+    </mobility_configuration>
+    <mobility_configuration node="24" model="basic_range">
+      <configuration name="range" value="275"/>
+      <configuration name="bandwidth" value="54000000"/>
+      <configuration name="jitter" value="0"/>
+      <configuration name="delay" value="5000"/>
+      <configuration name="error" value="0.0"/>
+      <configuration name="promiscuous" value="0"/>
+    </mobility_configuration>
+  </mobility_configurations>
   <session_origin lat="47.579166412353516" lon="-122.13232421875" alt="2.0" scale="150.0"/>
   <session_options>
     <configuration name="controlnet" value=""/>
