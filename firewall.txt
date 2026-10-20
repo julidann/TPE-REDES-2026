@@ -106,3 +106,18 @@ iptables -I FORWARD 1 -p udp --dport 15000 -j REJECT
 Reemplazar por DROP:
 sh
 iptables -R FORWARD 1 -p udp --dport 15000 -j DROP
+
+
+
+
+Paso 3: Crear imagen Docker y configurar Server-Docker (Incisos f y g)
+En la terminal de su máquina virtual (fuera de CORE), creen una carpeta y pongan ahí TCPServidor.py, UDPServidor.py, TCPCliente.py, UDPCliente.py.
+Creen index.html:
+
+Creen el archivo Dockerfile:
+
+Construyan la imagen:
+
+En CORE (Server-Docker):
+En el campo Image del nodo Docker pongan: -p 80:80 nginx-ubuntu-cdar:2.0
+En el servicio StaticRoute del Server-Docker: ship addr flush dev eth0ip addr add 10.13.0.3/24 dev eth0ip route add default via 10.13.0.1nginx
