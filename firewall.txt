@@ -1,0 +1,108 @@
+iptables -P FORWARD DROP
+iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A FORWARD -s 10.13.1.0/25 -o eth0 -j ACCEPT
+iptables -t nat -A POSTROUTING -s 10.13.1.0/25 -o eth0 -j MASQUERADE
+
+Paso 2: Firewalls y NAT (Incisos b, c, d y e)
+
+Activen el servicio Firewall (Security -> Firewall) en R4, R2 y R0.
+
+En R4 (Inciso b - Solo Empresa 1 sale a Internet por R4):
+sh
+iptables -P FORWARD DROP
+iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A FORWARD -s 10.13.1.0/25 -o eth0 -j ACCEPT
+iptables -t nat -A POSTROUTING -s 10.13.1.0/25 -o eth0 -j MASQUERADE
+En R2 (Incisos c y e - Datacenter sale a Internet + toda la torre puede ir a 201.0.2.2):
+sh
+iptables -P FORWARD DROP
+iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+# Permitir al Datacenter salir a Internet
+iptables -A FORWARD -s 10.13.0.0/24 -o eth0 -j ACCEPT
+# Permitir a toda la torre ir a la IP publica de Router-Casa (Inciso e)
+iptables -A FORWARD -s 10.13.0.0/23 -d 201.0.2.2 -o eth0 -j ACCEPT
+# Permitir tráfico interno entre Datacenter y el resto de la torre
+iptables -A FORWARD -i eth1 -o eth1 -j ACCEPT
+# NAT de salida por eth0
+iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+En R0 (Inciso d - Casa sale a Internet):
+sh
+iptables -t nat -A POSTROUTING -s 192.168.10.0/24 -o eth0 -j MASQUERADE
+Paso 3: Crear imagen Docker y configurar Server-Docker (Incisos f y g)
+En la terminal de su máquina virtual (fuera de CORE), creen una carpeta y pongan ahí TCPServidor.py, UDPServidor.py, TCPCliente.py, UDPCliente.py.
+Creen index.html:
+html
+<html><head><title>Hola CDAR</title></head><body><h1>Hola CDAR</h1></body></html>
+Creen el archivo Dockerfile:
+dockerfile
+FROM ubuntu:latest
+RUN apt-get update && apt-get install -y nginx iproute2 ethtool python3 iputils-ping
+COPY index.html /var/www/html/
+COPY TCPServidor.py UDPServidor.py /opt/cdar/
+EXPOSE 80/tcp
+EXPOSE 15000/tcp
+EXPOSE 15000/udp
+CMD ["nginx", "-g", "daemon off;"]
+Construyan la imagen:
+bash
+docker build -t nginx-ubuntu-cdar:2.0 .
+En CORE (Server-Docker):
+En el campo Image del nodo Docker pongan: -p 80:80 nginx-ubuntu-cdar:2.0
+En el servicio StaticRoute del Server-Docker:
+sh
+ip addr flush dev eth0
+ip addr add 10.13.0.3/24 dev eth0
+ip route add default via 10.13.0.1
+nginx
+Paso 4: Port Forwarding (DNAT) y Pruebas Web/Sockets (Incisos h, i, j, k)
+
+Para que desde afuera (y desde adentro usando la IP pública) puedan entrar al Server-Docker (10.13.0.3) a través de R2 (201.0.1.2), agreguen estas reglas en el Firewall de R2:
+
+sh
+# Reenvío de puertos (DNAT) para HTTP (80) y Sockets (15000 TCP y UDP)
+iptables -t nat -A PREROUTING -d 201.0.1.2 -p tcp --dport 80 -j DNAT --to-destination 10.13.0.3:80
+iptables -t nat -A PREROUTING -d 201.0.1.2 -p tcp --dport 15000 -j DNAT --to-destination 10.13.0.3:15000
+iptables -t nat -A PREROUTING -d 201.0.1.2 -p udp --dport 15000 -j DNAT --to-destination 10.13.0.3:15000
+# Permitir el pasaje de esos paquetes hacia el Server-Docker
+iptables -A FORWARD -d 10.13.0.3 -p tcp --dport 80 -j ACCEPT
+iptables -A FORWARD -d 10.13.0.3 -p tcp --dport 15000 -j ACCEPT
+iptables -A FORWARD -d 10.13.0.3 -p udp --dport 15000 -j ACCEPT
+
+(Nota para los incisos i y k: Si PC-1 accede a 201.0.1.2, el paquete entra a R2 por eth1 y vuelve a salir por eth1 hacia 10.13.0.3. Para que Server-Docker no le responda directo a PC-1 con su IP privada rompiendo la conexión TCP —fenómeno llamado NAT Loopback/Hairpinning—, agreguen en R2: iptables -t nat -A POSTROUTING -s 10.13.0.0/23 -d 10.13.0.3 -o eth1 -j MASQUERADE o analicen ese comportamiento en Wireshark según lo visto en su práctica).
+
+Respuestas clave para las preguntas de los incisos h, i, j, k:
+
+Inciso h (curl desde PC-Casa): Se ejecuta curl http://201.0.1.2:80. En R2, al entrar por eth0 hace DNAT (cambia IP destino 201.0.1.2 
+→
+→ 10.13.0.3). Además, en R0 hubo SNAT/MASQUERADE (cambia IP origen 192.168.10.2 
+→
+→ 201.0.2.2).
+Inciso i (curl desde PC-1): Puede hacerse directo a la IP privada http://10.13.0.3:80 (sin pasar por R2, solo R5 
+→
+→ R3 
+→
+→ Sw-Dc 
+→
+→ Server-Docker).
+Inciso j (Sockets desde PC-Casa a 201.0.1.2):
+El cliente informa el socket local con su IP privada (192.168.10.2) y un puerto efímero elegido por el sistema operativo de PC-Casa.
+El servidor ve como origen la IP pública de R0 (201.0.2.2) porque R0 hizo NAT (MASQUERADE).
+Inciso k (PC-1 hacia IP privada 10.13.0.3 vs IP pública 201.0.1.2):
+Usando la IP privada (10.13.0.3) es más eficiente: va de PC-1 
+→
+→ R5 
+→
+→ R3 
+→
+→ Server-Docker (no pasa por R4, R1 ni R2, ni sufre traducción NAT).
+Paso 5: Prueba de bloqueo en caliente con REJECT vs DROP (Inciso l)
+
+Con la simulación corriendo, abran una terminal en R2 y ejecuten:
+
+Con REJECT:
+sh
+iptables -I FORWARD 1 -p udp --dport 15000 -j REJECT
+¿Qué pasa?: El cliente TCP sigue funcionando normal. El cliente UDP falla o se entera del rechazo inmediatamente porque R2 le devuelve un paquete ICMP Destination Unreachable (Type 3, Code 3: Port Unreachable).
+Reemplazar por DROP:
+sh
+iptables -R FORWARD 1 -p udp --dport 15000 -j DROP
