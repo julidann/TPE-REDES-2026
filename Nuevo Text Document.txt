@@ -1,0 +1,123 @@
+1. R1 (Router ISP)
+
+(Solo IPs públicas, sin rutas ni firewall)
+
+sh
+#!/bin/sh
+ip addr flush dev eth0
+ip addr flush dev eth1
+ip addr flush dev eth2
+ip addr add 201.0.0.1/24 dev eth0
+ip addr add 201.0.1.1/24 dev eth1
+ip addr add 201.0.2.1/24 dev eth2
+2. R0 (Router-Casa)
+
+(IPs + Ruta por defecto + NAT para que PC-Casa salga a Internet - Inciso d)
+
+sh
+#!/bin/sh
+ip addr flush dev eth0
+ip addr flush dev eth1
+ip addr add 201.0.2.2/24 dev eth0
+ip addr add 192.168.10.1/24 dev eth1
+ip route add default via 201.0.2.1
+# Limpiar reglas previas y activar NAT (Inciso d)
+iptables -F
+iptables -t nat -F
+iptables -t nat -A POSTROUTING -s 192.168.10.0/24 -o eth0 -j MASQUERADE
+3. R4 (DMZ Administración)
+
+(IPs + Rutas + Firewall y NAT para que solo la Empresa 1 10.13.1.0/25 salga a Internet - Inciso b)
+
+sh
+#!/bin/sh
+ip addr flush dev eth0
+ip addr flush dev eth1
+ip addr add 201.0.0.2/24 dev eth0
+ip addr add 10.13.1.161/28 dev eth1
+ip route add 10.13.0.0/23 via 10.13.1.162
+ip route add default via 201.0.0.1
+# Limpiar reglas previas
+iptables -F
+iptables -t nat -F
+# Politica restrictiva: solo Empresa 1 (10.13.1.0/25) sale a Internet (Inciso b)
+iptables -P FORWARD DROP
+iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+iptables -A FORWARD -s 10.13.1.0/25 -o eth0 -j ACCEPT
+iptables -t nat -A POSTROUTING -s 10.13.1.0/25 -o eth0 -j MASQUERADE
+4. R2 (DMZ Datacenter)
+
+(IPs + Rutas + Salida a Internet del Datacenter + Salida hacia 201.0.2.2 + Reenvío de puertos 80 y 15000 hacia Server-Docker - Incisos c, e, h, j)
+
+sh
+#!/bin/sh
+ip addr flush dev eth0
+ip addr flush dev eth1
+ip addr add 201.0.1.2/24 dev eth0
+ip addr add 10.13.0.1/24 dev eth1
+ip route add 10.13.1.0/24 via 10.13.0.2
+ip route add default via 201.0.1.1
+# Limpiar reglas previas
+iptables -F
+iptables -t nat -F
+# Politica por defecto en FORWARD
+iptables -P FORWARD DROP
+iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+# Inciso c: Permitir que el Datacenter (10.13.0.0/24) salga a Internet
+iptables -A FORWARD -s 10.13.0.0/24 -o eth0 -j ACCEPT
+# Inciso e: Permitir que toda la Torre (10.13.0.0/23) vaya a la IP publica de Casa (201.0.2.2)
+iptables -A FORWARD -s 10.13.0.0/23 -d 201.0.2.2 -o eth0 -j ACCEPT
+# NAT de salida por la interfaz publica eth0
+iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+# Incisos h, j: Port Forwarding (DNAT) de puertos 80 (HTTP) y 15000 (TCP y UDP) hacia Server-Docker (10.13.0.3)
+iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -j DNAT --to-destination 10.13.0.3:80
+iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 15000 -j DNAT --to-destination 10.13.0.3:15000
+iptables -t nat -A PREROUTING -i eth0 -p udp --dport 15000 -j DNAT --to-destination 10.13.0.3:15000
+iptables -A FORWARD -i eth0 -d 10.13.0.3 -p tcp --dport 80 -j ACCEPT
+iptables -A FORWARD -i eth0 -d 10.13.0.3 -p tcp --dport 15000 -j ACCEPT
+iptables -A FORWARD -i eth0 -d 10.13.0.3 -p udp --dport 15000 -j ACCEPT
+5. R3 (Router Interno Torre)
+
+(IPs + Rutas internas + Ruta hacia 201.0.2.2 por R2 + Ruta por defecto hacia R4 - Incisos a, e)
+
+sh
+#!/bin/sh
+ip addr flush dev eth0
+ip addr flush dev eth1
+ip addr flush dev eth2
+ip addr add 10.13.0.2/24 dev eth0
+ip addr add 10.13.1.162/28 dev eth1
+ip addr add 10.13.1.129/27 dev eth2
+# Hacia Empresa 1 (por R5)
+ip route add 10.13.1.0/25 via 10.13.1.130
+# Inciso e: Tráfico hacia la IP pública de Router-Casa va por R2
+ip route add 201.0.2.2/32 via 10.13.0.1
+# El resto del tráfico hacia internet va por R4
+ip route add default via 10.13.1.161
+6. R5 (Router Empresa 1)
+sh
+#!/bin/sh
+ip addr flush dev eth0
+ip addr flush dev eth1
+ip addr flush dev eth2
+ip addr flush dev eth3
+ip addr add 10.13.1.130/27 dev eth0
+ip addr add 10.13.1.113/29 dev eth1
+ip addr add 10.13.1.65/27 dev eth2
+ip addr add 10.13.1.121/30 dev eth3
+# Redes WiFi detrás de R6
+ip route add 10.13.1.0/26 via 10.13.1.122
+ip route add 10.13.1.96/28 via 10.13.1.122
+# Ruta por defecto hacia R3
+ip route add default via 10.13.1.129
+7. R6 (Router WiFi Empresa 1)
+sh
+#!/bin/sh
+ip addr flush dev eth0
+ip addr flush dev eth1
+ip addr flush dev eth2
+ip addr add 10.13.1.122/30 dev eth0
+ip addr add 10.13.1.1/26 dev eth1
+ip addr add 10.13.1.97/28 dev eth2
+# Ruta por defecto hacia R5
+ip route add default via 10.13.1.121
